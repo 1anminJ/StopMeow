@@ -1,6 +1,7 @@
-/// 기획서 상태머신 표의 상태 목록. 전이 로직은 미구현.
-enum CatState {
-    case idle, follow, drag, typing, overheat
+/// 기획서 상태머신 표의 상태 목록 + 실제 구현된 사냥/쓰다듬기 상태.
+/// `CatWanderEngine.currentState`가 내부 플래그들로부터 매 틱 계산해서 채운다.
+enum CatState: Equatable {
+    case idle, follow, drag, pet, hunt, typing, overheat
     case shortformWarn1, shortformWarn2, shortformWarn3
     case reminder, pomodoro, celebrate
 

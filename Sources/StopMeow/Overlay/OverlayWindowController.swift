@@ -8,6 +8,7 @@ final class OverlayWindowController: NSWindowController {
     private var wanderEngine: CatWanderEngine?
     private var settingsObserver: NSObjectProtocol?
     private var isCatEnabled = true
+    private let shortformAlert = ShortformAlertWindowController()
 
     convenience init() {
         // 높이에 jumpHeadroomRows만큼 여유를 둬서 스페이스바 점프가 위로 튈 때 안 잘리게 함.
@@ -44,6 +45,18 @@ final class OverlayWindowController: NSWindowController {
         hostingView.frame = NSRect(origin: .zero, size: size)
         window.contentView = hostingView
         wanderEngine = engine
+
+        engine.onShortformWarn3Changed = { [weak self] isWarn3 in
+            guard let self, self.isCatEnabled else { return }
+            if isWarn3 {
+                // 작은 고양이는 잠깐 사라지고 그 자리에 큰 고양이가 짠 나타나는 느낌으로.
+                self.window?.orderOut(nil)
+                self.shortformAlert.show()
+            } else {
+                self.shortformAlert.hide()
+                self.window?.orderFront(nil)
+            }
+        }
 
         applyCatEnabledSetting(initial: true)
         settingsObserver = NotificationCenter.default.addObserver(

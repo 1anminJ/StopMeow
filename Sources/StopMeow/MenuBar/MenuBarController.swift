@@ -6,6 +6,7 @@ final class MenuBarController: NSObject {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
     private let catEnabledItem = NSMenuItem()
+    private let shortformDetectionItem = NSMenuItem()
     private let stretchItem = NSMenuItem()
     private let waterItem = NSMenuItem()
     private let jumpItem = NSMenuItem()
@@ -29,6 +30,11 @@ final class MenuBarController: NSObject {
         menu.addItem(catEnabledItem)
 
         menu.addItem(.separator())
+
+        shortformDetectionItem.title = "숏폼 감지"
+        shortformDetectionItem.target = self
+        shortformDetectionItem.action = #selector(toggleShortformDetection)
+        menu.addItem(shortformDetectionItem)
 
         let intensityMenu = NSMenu()
         for (item, level) in [(weakItem, DisturbIntensity.weak), (normalItem, DisturbIntensity.normal), (strongItem, DisturbIntensity.strong)] {
@@ -73,6 +79,7 @@ final class MenuBarController: NSObject {
     private func refreshCheckmarks() {
         let defaults = UserDefaults.standard
         catEnabledItem.state = defaults.bool(forKey: SettingsKey.catEnabled) ? .on : .off
+        shortformDetectionItem.state = defaults.bool(forKey: SettingsKey.shortformDetectionEnabled) ? .on : .off
         stretchItem.state = defaults.bool(forKey: SettingsKey.stretchReminderEnabled) ? .on : .off
         waterItem.state = defaults.bool(forKey: SettingsKey.waterReminderEnabled) ? .on : .off
         jumpItem.state = defaults.bool(forKey: SettingsKey.jumpEnabled) ? .on : .off
@@ -90,6 +97,7 @@ final class MenuBarController: NSObject {
     }
 
     @objc private func toggleCatEnabled() { toggle(SettingsKey.catEnabled, item: catEnabledItem) }
+    @objc private func toggleShortformDetection() { toggle(SettingsKey.shortformDetectionEnabled, item: shortformDetectionItem) }
     @objc private func toggleStretch() { toggle(SettingsKey.stretchReminderEnabled, item: stretchItem) }
     @objc private func toggleWater() { toggle(SettingsKey.waterReminderEnabled, item: waterItem) }
     @objc private func toggleJump() { toggle(SettingsKey.jumpEnabled, item: jumpItem) }

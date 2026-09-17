@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 시선 방향(3프레임). 기획서 모션 목록 "시선 따라가기 | 커서 이동 | 3 | O"에 대응.
-enum EyeLook {
+enum EyeLook: Equatable {
     case left, center, right, closed // closed: 쓰다듬는 동안
 
     /// 스프라이트가 좌우 반전되어 있을 때 실제로 그려야 할 눈 위치.
@@ -63,6 +63,7 @@ enum CatSprite {
 /// 기획서 모션 목록의 "Idle 대기"·"배회"·"사냥 자세"·"타이핑 꾹꾹이"·"과열 모드" 항목에 대응.
 enum CatFrame: Equatable {
     case idleStand, walk1, walk2, sit, hunt1, hunt2, typing1, typing2, overheat1, overheat2
+    case wave1, wave2 // 숏폼 경고1 - 구석에서 손짓
 
     func rows(eyeLook: EyeLook) -> [String] {
         let head = CatSprite.bodyRows(eyeLook: eyeLook)
@@ -77,6 +78,8 @@ enum CatFrame: Equatable {
         case .typing2: return head + ["...WW...WW..."] // 꾹꾹이 - 앞발 벌리고
         case .overheat1: return head + ["....BBBB....."] // 과열 - 몸 웅크림 (색은 CatView에서 붉게 틴트)
         case .overheat2: return head + ["...BBBB......"] // 과열 - 살짝 떨림
+        case .wave1: return head + [".OW.........."] // 손짓 - 한쪽 발 들고
+        case .wave2: return head + ["..........WO."] // 손짓 - 반대쪽 발 들고
         }
     }
 
