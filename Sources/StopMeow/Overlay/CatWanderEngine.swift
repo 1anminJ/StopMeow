@@ -1,7 +1,7 @@
 import AppKit
 
-/// Idle 상태의 기본 배회 로직: 화면 안 임의 지점으로 걸어갔다가 멈춰 서거나 앉기를 반복.
-/// 기획서 상태머신의 "Idle | 배회, 가끔 앉기"에 대응. (타이핑/커서 반응 등 다른 상태 전이는 아직 없음)
+/// Idle 상태의 기본 배회 로직 + 커서/키보드 반응(시선/사냥/타이핑/과열) 오버라이드.
+/// 우선순위: 드래그·쓰다듬기(일시정지) > 타이핑/과열 > 사냥 자세 > 평소 배회.
 final class CatWanderEngine {
     private weak var window: NSWindow?
     private let state: CatAnimationState
@@ -24,6 +24,10 @@ final class CatWanderEngine {
     private var isHunting = false
     private var huntTick = 0
 
+    private let typingMonitor = TypingActivityMonitor()
+    private var typingActivity: TypingActivityMonitor.Activity = .idle
+    private var typingTick = 0
+
     private let speed: CGFloat = 60 // px/초
     private let idleDuration: ClosedRange<TimeInterval> = 1.5...4.0
     private let screenMargin: CGFloat = 16
@@ -40,6 +44,7 @@ final class CatWanderEngine {
     }
 
     func start() {
+        typingMonitor.start()
         timer = Timer.scheduledTimer(withTimeInterval: tickInterval, repeats: true) { [weak self] _ in
             self?.tick()
         }
@@ -48,6 +53,7 @@ final class CatWanderEngine {
     func stop() {
         timer?.invalidate()
         timer = nil
+        typingMonitor.stop()
     }
 
     /// 드래그/쓰다듬기 시작: 배회 이동 로직을 멈춘다 (시선 추적은 계속 동작).
@@ -65,18 +71,27 @@ final class CatWanderEngine {
         guard let window else { return }
         updateGaze(window: window)
 
-        let wasHunting = isHunting
+        let wasOverridden = isHunting || typingActivity != .idle
+
         if isPaused {
             isHunting = false
+            typingActivity = .idle
         } else {
-            updateHunt()
+            updateTyping()
+            if typingActivity == .idle {
+                updateHunt() // 타이핑 중엔 사냥 자세보다 타이핑 반응이 우선
+            } else {
+                isHunting = false
+            }
         }
-        if wasHunting && !isHunting {
-            // 사냥 자세 풀림: 다음 프레임을 즉시 정상 상태로 되돌려 크라우치 포즈가 눌어붙지 않게 함
+
+        let stillOverridden = isHunting || typingActivity != .idle
+        if wasOverridden && !stillOverridden {
+            // 사냥/타이핑 풀림: 다음 프레임을 즉시 정상 상태로 되돌려 포즈가 눌어붙지 않게 함
             if case .walking = mode { state.frame = .walk1 } else { state.frame = .idleStand }
         }
 
-        guard !isPaused, !isHunting else { return }
+        guard !isPaused, !stillOverridden else { return }
 
         switch mode {
         case .idle(let until):
@@ -133,6 +148,20 @@ final class CatWanderEngine {
         guard isHunting else { return }
         huntTick += 1
         state.frame = (huntTick / 4) % 2 == 0 ? .hunt1 : .hunt2
+    }
+
+    /// 최근 타이핑 빈도에 따라 꾹꾹이/과열 프레임을 재생한다.
+    private func updateTyping() {
+        typingActivity = typingMonitor.currentActivity()
+        guard typingActivity != .idle else { return }
+        typingTick += 1
+        switch typingActivity {
+        case .idle: break
+        case .typing:
+            state.frame = (typingTick / 4) % 2 == 0 ? .typing1 : .typing2
+        case .overheat:
+            state.frame = (typingTick / 3) % 2 == 0 ? .overheat1 : .overheat2
+        }
     }
 
     private func arrive() {

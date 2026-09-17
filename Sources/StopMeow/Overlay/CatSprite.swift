@@ -54,9 +54,10 @@ enum CatSprite {
     ]
 }
 
-/// Idle/배회/사냥 애니메이션 프레임. 기획서 모션 목록의 "Idle 대기"·"배회"·"사냥 자세" 항목에 대응.
-enum CatFrame {
-    case idleStand, walk1, walk2, sit, hunt1, hunt2
+/// Idle/배회/사냥/타이핑 애니메이션 프레임.
+/// 기획서 모션 목록의 "Idle 대기"·"배회"·"사냥 자세"·"타이핑 꾹꾹이"·"과열 모드" 항목에 대응.
+enum CatFrame: Equatable {
+    case idleStand, walk1, walk2, sit, hunt1, hunt2, typing1, typing2, overheat1, overheat2
 
     func rows(eyeLook: EyeLook) -> [String] {
         let head = CatSprite.bodyRows(eyeLook: eyeLook)
@@ -67,7 +68,16 @@ enum CatFrame {
         case .sit: return head + ["....BBBB....."]
         case .hunt1: return head + ["OW.........WO"] // 자세 낮추고 다리를 넓게
         case .hunt2: return head + [".OW.......WO."] // 살짝 당겨 꼬리 씰룩
+        case .typing1: return head + ["....WW.WW...."] // 꾹꾹이 - 앞발 모으고
+        case .typing2: return head + ["...WW...WW..."] // 꾹꾹이 - 앞발 벌리고
+        case .overheat1: return head + ["....BBBB....."] // 과열 - 몸 웅크림 (색은 CatView에서 붉게 틴트)
+        case .overheat2: return head + ["...BBBB......"] // 과열 - 살짝 떨림
         }
+    }
+
+    /// 붉은 틴트 + 김 이펙트를 씌울지 여부.
+    var isOverheating: Bool {
+        self == .overheat1 || self == .overheat2
     }
 }
 

@@ -16,19 +16,42 @@ struct CatView: View {
     var body: some View {
         // 쓰다듬는 동안은 배회 프레임 대신 차분한 앉은 자세를 강제로 보여준다.
         let displayFrame = state.isPetting ? .sit : state.frame
+        let overheating = displayFrame.isOverheating
 
-        PixelSpriteView(rows: displayFrame.rows(eyeLook: state.eyeLook))
-            .scaleEffect(x: state.facingRight ? 1 : -1, y: 1)
-            // ponytail: 드래그 "늘어남"은 스쿼시 변형으로, 쓰다듬기 "골골"은 반복 펄스로 근사.
-            // 모션 목록의 전용 픽셀 프레임은 아트 준비되면 교체.
-            .scaleEffect(x: state.isDragging ? 0.88 : 1, y: state.isDragging ? 1.18 : 1)
-            .scaleEffect(state.isPetting ? 1.08 : 1.0)
-            .animation(.spring(response: 0.25, dampingFraction: 0.5), value: state.isDragging)
-            .animation(
-                state.isPetting
-                    ? .easeInOut(duration: 0.3).repeatForever(autoreverses: true)
-                    : .easeOut(duration: 0.2),
-                value: state.isPetting
-            )
+        ZStack(alignment: .top) {
+            PixelSpriteView(rows: displayFrame.rows(eyeLook: state.eyeLook))
+                // ponytail: "빨개짐"은 픽셀을 새로 그리는 대신 색 틴트로 근사.
+                .colorMultiply(overheating ? Color(red: 1, green: 0.55, blue: 0.5) : .white)
+            if overheating {
+                SteamPuff().offset(y: -10) // "김"
+            }
+        }
+        .scaleEffect(x: state.facingRight ? 1 : -1, y: 1)
+        // ponytail: 드래그 "늘어남"은 스쿼시 변형으로, 쓰다듬기 "골골"은 반복 펄스로 근사.
+        // 모션 목록의 전용 픽셀 프레임은 아트 준비되면 교체.
+        .scaleEffect(x: state.isDragging ? 0.88 : 1, y: state.isDragging ? 1.18 : 1)
+        .scaleEffect(state.isPetting ? 1.08 : 1.0)
+        .animation(.spring(response: 0.25, dampingFraction: 0.5), value: state.isDragging)
+        .animation(
+            state.isPetting
+                ? .easeInOut(duration: 0.3).repeatForever(autoreverses: true)
+                : .easeOut(duration: 0.2),
+            value: state.isPetting
+        )
+    }
+}
+
+/// 과열 상태일 때 머리 위로 피어오르는 김 한 방울.
+private struct SteamPuff: View {
+    @State private var rise = false
+
+    var body: some View {
+        Circle()
+            .fill(Color.white.opacity(0.7))
+            .frame(width: 6, height: 6)
+            .offset(y: rise ? -14 : -4)
+            .opacity(rise ? 0 : 0.8)
+            .animation(.easeOut(duration: 0.6).repeatForever(autoreverses: false), value: rise)
+            .onAppear { rise = true }
     }
 }
