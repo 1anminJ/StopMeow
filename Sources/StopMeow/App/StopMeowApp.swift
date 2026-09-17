@@ -17,11 +17,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var overlay: OverlayWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        SettingsKey.registerDefaults()
         // 타이핑 감지(NSEvent 전역 키 모니터링)에는 손쉬운 사용 권한만 있으면 됨.
         // (입력 모니터링은 CGEventTap 등 더 저수준 후킹에 쓰이는 별개 권한 — 여기선 불필요)
         requestAccessibilityPermissionIfNeeded()
+        // OverlayWindowController가 "고양이 표시" 설정에 따라 스스로 보이거나 숨는다.
         overlay = OverlayWindowController()
-        overlay?.showWindow(nil)
         menuBar = MenuBarController()
     }
 
