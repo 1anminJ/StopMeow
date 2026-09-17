@@ -7,10 +7,10 @@ final class OverlayWindowController: NSWindowController {
     private var wanderEngine: CatWanderEngine?
 
     convenience init() {
-        let pixelSize: CGFloat = 8
+        // 높이에 jumpHeadroomRows만큼 여유를 둬서 스페이스바 점프가 위로 튈 때 안 잘리게 함.
         let size = NSSize(
-            width: CGFloat(CatSprite.width) * pixelSize,
-            height: CGFloat(CatFrame.idleStand.rows(eyeLook: .center).count) * pixelSize
+            width: CGFloat(CatSprite.width) * CatSprite.pixelSize,
+            height: CGFloat(CatSprite.heightRows + CatSprite.jumpHeadroomRows) * CatSprite.pixelSize
         )
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: size),
@@ -38,6 +38,7 @@ final class OverlayWindowController: NSWindowController {
             engine.endExternalDrag()
         }
 
+        hostingView.frame = NSRect(origin: .zero, size: size)
         window.contentView = hostingView
         wanderEngine = engine
         wanderEngine?.start()

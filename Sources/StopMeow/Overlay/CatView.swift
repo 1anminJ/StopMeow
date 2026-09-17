@@ -8,10 +8,15 @@ final class CatAnimationState: ObservableObject {
     @Published var eyeLook: EyeLook = .center
     @Published var isDragging: Bool = false
     @Published var isPetting: Bool = false
+    @Published var jumpTrigger: Int = 0 // 스페이스바 누를 때마다 증가 — 매번 점프 재생
 }
 
 struct CatView: View {
     @ObservedObject var state: CatAnimationState
+    @State private var jumpOffset: CGFloat = 0
+
+    private static let contentWidth = CGFloat(CatSprite.width) * CatSprite.pixelSize
+    private static let contentHeight = CGFloat(CatSprite.heightRows + CatSprite.jumpHeadroomRows) * CatSprite.pixelSize
 
     var body: some View {
         // 쓰다듬는 동안은 배회 프레임 대신 차분한 앉은 자세 + 감은 눈을 강제로 보여준다.
@@ -40,6 +45,19 @@ struct CatView: View {
                 : .easeOut(duration: 0.2),
             value: state.isPetting
         )
+        // 스페이스바 점프: 창 높이에 여유(jumpHeadroom)를 둬서 위로 튀어도 안 잘리게 함.
+        .frame(width: Self.contentWidth, height: Self.contentHeight, alignment: .bottom)
+        .offset(y: jumpOffset)
+        .onChange(of: state.jumpTrigger) { _, _ in
+            withAnimation(.interpolatingSpring(stiffness: 500, damping: 10)) {
+                jumpOffset = -CGFloat(CatSprite.jumpHeadroomRows) * CatSprite.pixelSize
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+                withAnimation(.interpolatingSpring(stiffness: 300, damping: 12)) {
+                    jumpOffset = 0
+                }
+            }
+        }
     }
 }
 

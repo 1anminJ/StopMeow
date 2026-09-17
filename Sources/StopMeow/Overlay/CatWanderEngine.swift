@@ -48,6 +48,9 @@ final class CatWanderEngine {
     }
 
     func start() {
+        typingMonitor.onSpacePressed = { [weak self] in
+            self?.state.jumpTrigger += 1
+        }
         typingMonitor.start()
         timer = Timer.scheduledTimer(withTimeInterval: tickInterval, repeats: true) { [weak self] _ in
             self?.tick()

@@ -7,6 +7,11 @@ import ApplicationServices
 final class TypingActivityMonitor {
     enum Activity: Equatable { case idle, typing, overheat }
 
+    private static let spaceKeyCode: UInt16 = 49
+
+    /// 타이핑 중 스페이스바를 누른 순간 호출됨 (점프 트리거용).
+    var onSpacePressed: (() -> Void)?
+
     private var monitor: Any?
     private var recentKeyTimestamps: [Date] = []
     private var lastKeyAt = Date.distantPast
@@ -17,8 +22,11 @@ final class TypingActivityMonitor {
     private let overheatKeysPerSecond: Double = 8
 
     func start() {
-        monitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] _ in
+        monitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             self?.recordKeystroke()
+            if event.keyCode == Self.spaceKeyCode {
+                self?.onSpacePressed?()
+            }
         }
     }
 

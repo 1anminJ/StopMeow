@@ -19,6 +19,9 @@ enum EyeLook {
 // 저장된 zone 데이터로 교체.
 enum CatSprite {
     static let width = 13
+    static let heightRows = 8 // template 7줄 + 다리/자세 줄 1줄
+    static let pixelSize: CGFloat = 8
+    static let jumpHeadroomRows = 2 // 스페이스바 점프가 튈 여유 공간
 
     /// 머리+몸통+꼬리 (프레임 공통, 눈 줄/다리 줄만 상황별로 다름)
     private static let template: [String] = [
