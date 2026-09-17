@@ -49,6 +49,7 @@ final class CatWanderEngine {
 
     func start() {
         typingMonitor.onSpacePressed = { [weak self] in
+            guard UserDefaults.standard.bool(forKey: SettingsKey.jumpEnabled) else { return }
             self?.state.jumpTrigger += 1
         }
         typingMonitor.start()
