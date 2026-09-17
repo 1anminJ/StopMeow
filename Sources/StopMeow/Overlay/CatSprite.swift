@@ -36,7 +36,8 @@ enum CatSprite {
         case .center: return ".OBKBBBKBBO.."
         case .left: return ".OKBBBKBBBO.."
         case .right: return ".OBBKBBBKBO.."
-        case .closed: return ".OBOBBBOBBO.." // 눈 대신 감은 눈꺼풀 선(O)
+        case .closed: return ".OBBBBBBBBO.." // 눈동자(K) 자리를 몸통색으로 지워 "눈 감음"을 표현
+        // (O로 하면 원래 눈동자 K랑 색이 거의 같아서 이 작은 크기에선 티가 안 남 — 눈을 아예 지워야 확실히 보임)
         }
     }
 

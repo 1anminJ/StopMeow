@@ -17,14 +17,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var overlay: OverlayWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        requestAccessibilityPermissionIfNeeded() // 타이핑 감지(전역 키 모니터링)에 필요
+        // 타이핑 감지(NSEvent 전역 키 모니터링)에는 손쉬운 사용 권한만 있으면 됨.
+        // (입력 모니터링은 CGEventTap 등 더 저수준 후킹에 쓰이는 별개 권한 — 여기선 불필요)
+        requestAccessibilityPermissionIfNeeded()
         overlay = OverlayWindowController()
         overlay?.showWindow(nil)
         menuBar = MenuBarController()
     }
 
     /// 손쉬운 사용 권한이 없으면 시스템 설정으로 안내하는 대화상자를 띄운다.
-    /// ad-hoc 서명이라 다시 빌드하면 재승인이 필요할 수 있음 — 그럴 땐 앱을 재시작.
+    /// scripts/build-app.sh가 고정된 로컬 인증서("StopMeow Dev")로 서명하므로,
+    /// 한 번 허용해두면 재빌드해도 권한이 유지된다.
     private func requestAccessibilityPermissionIfNeeded() {
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)

@@ -31,19 +31,11 @@ final class OverlayWindowController: NSWindowController {
         let hostingView = DraggableCatHostingView(rootView: CatView(state: animationState))
         hostingView.onDragStart = { [weak self] in
             self?.animationState.isDragging = true
-            engine.pause()
+            engine.startExternalDrag()
         }
         hostingView.onDragEnd = { [weak self] in
             self?.animationState.isDragging = false
-            engine.resumeAfterInteraction()
-        }
-        hostingView.onPetStart = { [weak self] in
-            self?.animationState.isPetting = true
-            engine.pause()
-        }
-        hostingView.onPetEnd = { [weak self] in
-            self?.animationState.isPetting = false
-            engine.resumeAfterInteraction()
+            engine.endExternalDrag()
         }
 
         window.contentView = hostingView

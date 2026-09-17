@@ -1,6 +1,7 @@
 import AppKit
 
-/// Idle 상태의 기본 배회 로직 + 커서/키보드 반응(시선/사냥/타이핑/과열) 오버라이드.
+/// Idle 상태의 기본 배회 로직 + 커서/키보드 반응(시선/쓰다듬기/사냥/타이핑/과열) 오버라이드.
+/// 쓰다듬기는 클릭 없이 커서가 고양이 위에 머무는 것만으로 발동(호버).
 /// 우선순위: 드래그·쓰다듬기(일시정지) > 타이핑/과열 > 사냥 자세 > 평소 배회.
 final class CatWanderEngine {
     private weak var window: NSWindow?
@@ -15,6 +16,7 @@ final class CatWanderEngine {
     private var timer: Timer?
     private var walkTick = 0
     private var isPaused = false // 드래그/쓰다듬기 중에는 배회 이동을 멈춤
+    private var isExternallyDragging = false // 실제 드래그 중엔 호버 쓰다듬기 판정을 끔
 
     private var lastCursor: CGPoint = NSEvent.mouseLocation
     private var lastCursorMoveAt = Date()
@@ -58,13 +60,26 @@ final class CatWanderEngine {
         typingMonitor.stop()
     }
 
-    /// 드래그/쓰다듬기 시작: 배회 이동 로직을 멈춘다 (시선 추적은 계속 동작).
-    func pause() {
+    /// 실제 드래그(클릭+이동) 시작: 배회를 멈추고, 드래그 중엔 호버 쓰다듬기 판정도 끈다.
+    func startExternalDrag() {
+        isExternallyDragging = true
+        state.isPetting = false
         isPaused = true
     }
 
-    /// 드래그/쓰다듬기 종료: 잠깐 멈춰 있다가(흔들림 재생 시간) 다시 배회를 시작한다.
-    func resumeAfterInteraction() {
+    /// 드래그 종료: 잠깐 멈춰 있다가(흔들림 재생 시간) 다시 배회를 시작한다.
+    func endExternalDrag() {
+        isExternallyDragging = false
+        resumeAfterInteraction()
+    }
+
+    /// 배회 이동 로직을 멈춘다 (시선 추적은 계속 동작).
+    private func pause() {
+        isPaused = true
+    }
+
+    /// 잠깐 멈춰 있다가(흔들림 재생 시간) 다시 배회를 시작한다.
+    private func resumeAfterInteraction() {
         isPaused = false
         mode = .idle(until: Date().addingTimeInterval(0.4))
     }
@@ -72,6 +87,7 @@ final class CatWanderEngine {
     private func tick() {
         guard let window else { return }
         updateGaze(window: window)
+        updatePetting(window: window)
 
         let wasOverridden = isHunting || typingActivity != .idle
 
@@ -118,6 +134,19 @@ final class CatWanderEngine {
                 window.setFrameOrigin(CGPoint(x: current.x + dx * ratio, y: current.y + dy * ratio))
                 if abs(dx) > 1 { state.facingRight = dx > 0 }
             }
+        }
+    }
+
+    /// 클릭 없이 커서가 고양이 위에 올라와 있기만 해도 쓰다듬기로 취급한다.
+    private func updatePetting(window: NSWindow) {
+        guard !isExternallyDragging else { return } // 실제 드래그 중엔 무시(항상 커서 위에 있으니까)
+        let hovering = window.frame.contains(NSEvent.mouseLocation)
+        guard hovering != state.isPetting else { return }
+        state.isPetting = hovering
+        if hovering {
+            pause()
+        } else {
+            resumeAfterInteraction()
         }
     }
 

@@ -1,7 +1,8 @@
 import AppKit
+import ApplicationServices
 
 /// 전역 키 입력 빈도를 추적해 Typing/Overheat 여부를 판단한다.
-/// 손쉬운 사용(입력 모니터링) 권한이 없으면 이벤트가 전혀 오지 않아 조용히 비활성화된다 —
+/// 손쉬운 사용 권한이 없으면 이벤트가 전혀 오지 않아 조용히 비활성화된다 —
 /// PRD의 "미승인 시 우아한 폴백" 원칙과 동일하게 취급.
 final class TypingActivityMonitor {
     enum Activity: Equatable { case idle, typing, overheat }
@@ -12,8 +13,8 @@ final class TypingActivityMonitor {
 
     private let idleTimeout: TimeInterval = 1.0 // 이만큼 키 입력이 없으면 Idle로 판단
     private let rateWindow: TimeInterval = 1.0 // 최근 1초간 키 수로 타수 계산
-    // ponytail: 감으로 잡은 임계값. 실제 타이핑 느낌 보고 조정.
-    private let overheatKeysPerSecond: Double = 6
+    // ponytail: 실사용 피드백으로 6 -> 10(너무 안 걸림) -> 8로 재조정.
+    private let overheatKeysPerSecond: Double = 8
 
     func start() {
         monitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] _ in
