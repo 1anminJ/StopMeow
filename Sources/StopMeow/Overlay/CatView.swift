@@ -14,12 +14,14 @@ struct CatView: View {
     @ObservedObject var state: CatAnimationState
 
     var body: some View {
-        // 쓰다듬는 동안은 배회 프레임 대신 차분한 앉은 자세를 강제로 보여준다.
+        // 쓰다듬는 동안은 배회 프레임 대신 차분한 앉은 자세 + 감은 눈을 강제로 보여준다.
+        // TODO: 나중에 눈 감은 채로 하트 이펙트 띄우기
         let displayFrame = state.isPetting ? .sit : state.frame
+        let displayEyeLook = state.isPetting ? .closed : state.eyeLook
         let overheating = displayFrame.isOverheating
 
         ZStack(alignment: .top) {
-            PixelSpriteView(rows: displayFrame.rows(eyeLook: state.eyeLook))
+            PixelSpriteView(rows: displayFrame.rows(eyeLook: displayEyeLook))
                 // ponytail: "빨개짐"은 픽셀을 새로 그리는 대신 색 틴트로 근사.
                 .colorMultiply(overheating ? Color(red: 1, green: 0.55, blue: 0.5) : .white)
             if overheating {

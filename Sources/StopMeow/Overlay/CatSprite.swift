@@ -2,14 +2,14 @@ import SwiftUI
 
 /// 시선 방향(3프레임). 기획서 모션 목록 "시선 따라가기 | 커서 이동 | 3 | O"에 대응.
 enum EyeLook {
-    case left, center, right
+    case left, center, right, closed // closed: 쓰다듬는 동안
 
     /// 스프라이트가 좌우 반전되어 있을 때 실제로 그려야 할 눈 위치.
     var flipped: EyeLook {
         switch self {
         case .left: return .right
         case .right: return .left
-        case .center: return .center
+        case .center, .closed: return self
         }
     }
 }
@@ -36,6 +36,7 @@ enum CatSprite {
         case .center: return ".OBKBBBKBBO.."
         case .left: return ".OKBBBKBBBO.."
         case .right: return ".OBBKBBBKBO.."
+        case .closed: return ".OBOBBBOBBO.." // 눈 대신 감은 눈꺼풀 선(O)
         }
     }
 

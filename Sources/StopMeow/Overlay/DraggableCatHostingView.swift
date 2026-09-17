@@ -2,45 +2,42 @@ import AppKit
 import SwiftUI
 
 /// 클릭 드래그로 오버레이 윈도우 자체를 옮기는 호스팅 뷰.
-/// 몸통을 드래그하면 창이 따라오고(Drag), 머리를 클릭+드래그하면 제자리에서 쓰다듬기(골골) 반응만 한다.
+/// 머리든 몸이든 아무 데나 클릭하면 일단 쓰다듬기(제자리, 눈 감음)로 시작하고,
+/// 일정 거리 이상 움직이면 그 순간부터 드래그(창이 따라옴)로 전환된다.
 final class DraggableCatHostingView: NSHostingView<CatView> {
     var onDragStart: (() -> Void)?
     var onDragEnd: (() -> Void)?
     var onPetStart: (() -> Void)?
     var onPetEnd: (() -> Void)?
 
-    private enum Interaction { case none, dragging, petting }
-    private var interaction: Interaction = .none
+    private enum Interaction { case petting, dragging }
+    private var interaction: Interaction = .petting
 
     private var dragStartMouseLocation: NSPoint = .zero
     private var dragStartWindowOrigin: NSPoint = .zero
 
-    /// 스프라이트 상단 60%(귀~코 부근)를 머리 존으로 취급.
-    private let headZoneRatio: CGFloat = 0.6
-
-    private func isInHeadZone(_ point: NSPoint) -> Bool {
-        let headHeight = bounds.height * headZoneRatio
-        return isFlipped ? point.y <= headHeight : point.y >= bounds.height - headHeight
-    }
+    // ponytail: 감으로 잡은 임계값. 너무 예민/둔감하면 조정.
+    private let dragThreshold: CGFloat = 14 // px, 이 이상 움직이면 쓰다듬기 -> 드래그
 
     override func mouseDown(with event: NSEvent) {
-        let local = convert(event.locationInWindow, from: nil)
-        if isInHeadZone(local) {
-            interaction = .petting
-            onPetStart?()
-        } else {
-            interaction = .dragging
-            dragStartMouseLocation = NSEvent.mouseLocation
-            dragStartWindowOrigin = window?.frame.origin ?? .zero
-            onDragStart?()
-        }
+        dragStartMouseLocation = NSEvent.mouseLocation
+        dragStartWindowOrigin = window?.frame.origin ?? .zero
+        interaction = .petting
+        onPetStart?()
     }
 
     override func mouseDragged(with event: NSEvent) {
-        guard interaction == .dragging else { return } // 쓰다듬는 동안은 창을 옮기지 않음
         let current = NSEvent.mouseLocation
         let dx = current.x - dragStartMouseLocation.x
         let dy = current.y - dragStartMouseLocation.y
+
+        if interaction == .petting && (dx * dx + dy * dy).squareRoot() > dragThreshold {
+            onPetEnd?()
+            interaction = .dragging
+            onDragStart?()
+        }
+
+        guard interaction == .dragging else { return }
         window?.setFrameOrigin(NSPoint(x: dragStartWindowOrigin.x + dx, y: dragStartWindowOrigin.y + dy))
     }
 
@@ -48,8 +45,6 @@ final class DraggableCatHostingView: NSHostingView<CatView> {
         switch interaction {
         case .dragging: onDragEnd?()
         case .petting: onPetEnd?()
-        case .none: break
         }
-        interaction = .none
     }
 }

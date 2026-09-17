@@ -35,7 +35,9 @@ final class CatWanderEngine {
     private let gazeTimeout: TimeInterval = 1.2 // 커서가 이만큼 멈춰 있으면 시선도 정면으로
     private let gazeDeadzone: CGFloat = 40 // px, 이 폭 안에서는 정면 유지
     // ponytail: 30Hz 폴링 기준 임계값이라 대략치. 실제 써보고 너무 자주/드물게 반응하면 조정.
-    private let huntSpeedThreshold: CGFloat = 4000 // px/초, 이보다 빠르면 "사냥감 포착"
+    private let huntSpeedThreshold: CGFloat = 1200 // px/초 (수평 속도), 이보다 빠르면 "사냥감 포착"
+    private let huntNearbyMarginY: CGFloat = 220 // 고양이 위/아래 이 거리 안에서만 반응
+    private let huntNearbyMarginX: CGFloat = 260 // 고양이 좌우 이 거리 안에서만 반응
     private let huntGrace: TimeInterval = 0.35 // 마지막 빠른 움직임 후 이 시간 동안은 계속 사냥 자세
 
     init(window: NSWindow, state: CatAnimationState) {
@@ -79,7 +81,7 @@ final class CatWanderEngine {
         } else {
             updateTyping()
             if typingActivity == .idle {
-                updateHunt() // 타이핑 중엔 사냥 자세보다 타이핑 반응이 우선
+                updateHunt(window: window) // 타이핑 중엔 사냥 자세보다 타이핑 반응이 우선
             } else {
                 isHunting = false
             }
@@ -135,13 +137,23 @@ final class CatWanderEngine {
         state.eyeLook = state.facingRight ? rawLook : rawLook.flipped
     }
 
-    /// 커서가 순간적으로 빠르게 움직이면 몸을 낮추는 사냥 자세로 전환한다.
-    private func updateHunt() {
+    /// 고양이 위/아래 근처에서 커서가 좌우로 빠르게 움직이면 몸을 낮추는 사냥 자세로 전환한다.
+    private func updateHunt(window: NSWindow) {
         let cursor = NSEvent.mouseLocation
-        let distance = (cursor.x - lastHuntCursor.x, cursor.y - lastHuntCursor.y)
-        let speed = (distance.0 * distance.0 + distance.1 * distance.1).squareRoot() / CGFloat(tickInterval)
+        let dx = cursor.x - lastHuntCursor.x
+        let dy = cursor.y - lastHuntCursor.y
         lastHuntCursor = cursor
-        if speed > huntSpeedThreshold {
+
+        let hSpeed = abs(dx) / CGFloat(tickInterval)
+        let vSpeed = abs(dy) / CGFloat(tickInterval)
+
+        let frame = window.frame
+        let isAboveOrBelow =
+            (cursor.y > frame.maxY && cursor.y < frame.maxY + huntNearbyMarginY) ||
+            (cursor.y < frame.minY && cursor.y > frame.minY - huntNearbyMarginY)
+        let isNearHorizontally = abs(cursor.x - frame.midX) < huntNearbyMarginX
+
+        if isAboveOrBelow && isNearHorizontally && hSpeed > huntSpeedThreshold && hSpeed > vSpeed {
             lastFastMoveAt = Date()
         }
         isHunting = Date().timeIntervalSince(lastFastMoveAt) < huntGrace
