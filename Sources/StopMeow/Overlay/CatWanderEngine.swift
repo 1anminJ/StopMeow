@@ -14,10 +14,15 @@ final class CatWanderEngine {
     private var mode: Mode = .idle(until: .distantPast) // 시작하자마자 첫 목적지를 고르게 함
     private var timer: Timer?
     private var walkTick = 0
-    private var isPaused = false // 드래그 중에는 배회 이동을 멈춤
+    private var isPaused = false // 드래그/쓰다듬기 중에는 배회 이동을 멈춤
 
     private var lastCursor: CGPoint = NSEvent.mouseLocation
     private var lastCursorMoveAt = Date()
+
+    private var lastHuntCursor: CGPoint = NSEvent.mouseLocation
+    private var lastFastMoveAt = Date.distantPast
+    private var isHunting = false
+    private var huntTick = 0
 
     private let speed: CGFloat = 60 // px/초
     private let idleDuration: ClosedRange<TimeInterval> = 1.5...4.0
@@ -25,6 +30,9 @@ final class CatWanderEngine {
     private let tickInterval: TimeInterval = 1.0 / 30.0
     private let gazeTimeout: TimeInterval = 1.2 // 커서가 이만큼 멈춰 있으면 시선도 정면으로
     private let gazeDeadzone: CGFloat = 40 // px, 이 폭 안에서는 정면 유지
+    // ponytail: 30Hz 폴링 기준 임계값이라 대략치. 실제 써보고 너무 자주/드물게 반응하면 조정.
+    private let huntSpeedThreshold: CGFloat = 4000 // px/초, 이보다 빠르면 "사냥감 포착"
+    private let huntGrace: TimeInterval = 0.35 // 마지막 빠른 움직임 후 이 시간 동안은 계속 사냥 자세
 
     init(window: NSWindow, state: CatAnimationState) {
         self.window = window
@@ -42,13 +50,13 @@ final class CatWanderEngine {
         timer = nil
     }
 
-    /// 드래그 시작: 배회 이동 로직을 멈춘다 (시선 추적은 계속 동작).
+    /// 드래그/쓰다듬기 시작: 배회 이동 로직을 멈춘다 (시선 추적은 계속 동작).
     func pause() {
         isPaused = true
     }
 
-    /// 드래그 종료: 잠깐 멈춰 있다가(흔들림 재생 시간) 다시 배회를 시작한다.
-    func resumeAfterDrag() {
+    /// 드래그/쓰다듬기 종료: 잠깐 멈춰 있다가(흔들림 재생 시간) 다시 배회를 시작한다.
+    func resumeAfterInteraction() {
         isPaused = false
         mode = .idle(until: Date().addingTimeInterval(0.4))
     }
@@ -56,7 +64,19 @@ final class CatWanderEngine {
     private func tick() {
         guard let window else { return }
         updateGaze(window: window)
-        guard !isPaused else { return }
+
+        let wasHunting = isHunting
+        if isPaused {
+            isHunting = false
+        } else {
+            updateHunt()
+        }
+        if wasHunting && !isHunting {
+            // 사냥 자세 풀림: 다음 프레임을 즉시 정상 상태로 되돌려 크라우치 포즈가 눌어붙지 않게 함
+            if case .walking = mode { state.frame = .walk1 } else { state.frame = .idleStand }
+        }
+
+        guard !isPaused, !isHunting else { return }
 
         switch mode {
         case .idle(let until):
@@ -98,6 +118,21 @@ final class CatWanderEngine {
         let dx = cursor.x - window.frame.midX
         let rawLook: EyeLook = dx > gazeDeadzone ? .right : (dx < -gazeDeadzone ? .left : .center)
         state.eyeLook = state.facingRight ? rawLook : rawLook.flipped
+    }
+
+    /// 커서가 순간적으로 빠르게 움직이면 몸을 낮추는 사냥 자세로 전환한다.
+    private func updateHunt() {
+        let cursor = NSEvent.mouseLocation
+        let distance = (cursor.x - lastHuntCursor.x, cursor.y - lastHuntCursor.y)
+        let speed = (distance.0 * distance.0 + distance.1 * distance.1).squareRoot() / CGFloat(tickInterval)
+        lastHuntCursor = cursor
+        if speed > huntSpeedThreshold {
+            lastFastMoveAt = Date()
+        }
+        isHunting = Date().timeIntervalSince(lastFastMoveAt) < huntGrace
+        guard isHunting else { return }
+        huntTick += 1
+        state.frame = (huntTick / 4) % 2 == 0 ? .hunt1 : .hunt2
     }
 
     private func arrive() {

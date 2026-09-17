@@ -35,7 +35,15 @@ final class OverlayWindowController: NSWindowController {
         }
         hostingView.onDragEnd = { [weak self] in
             self?.animationState.isDragging = false
-            engine.resumeAfterDrag()
+            engine.resumeAfterInteraction()
+        }
+        hostingView.onPetStart = { [weak self] in
+            self?.animationState.isPetting = true
+            engine.pause()
+        }
+        hostingView.onPetEnd = { [weak self] in
+            self?.animationState.isPetting = false
+            engine.resumeAfterInteraction()
         }
 
         window.contentView = hostingView

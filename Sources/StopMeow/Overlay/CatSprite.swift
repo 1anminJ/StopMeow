@@ -54,9 +54,9 @@ enum CatSprite {
     ]
 }
 
-/// Idle/배회 애니메이션 프레임. 기획서 모션 목록의 "Idle 대기"·"배회" 항목에 대응.
+/// Idle/배회/사냥 애니메이션 프레임. 기획서 모션 목록의 "Idle 대기"·"배회"·"사냥 자세" 항목에 대응.
 enum CatFrame {
-    case idleStand, walk1, walk2, sit
+    case idleStand, walk1, walk2, sit, hunt1, hunt2
 
     func rows(eyeLook: EyeLook) -> [String] {
         let head = CatSprite.bodyRows(eyeLook: eyeLook)
@@ -65,6 +65,8 @@ enum CatFrame {
         case .walk1: return head + [".OW......WO.."]
         case .walk2: return head + ["...OW..WO...."]
         case .sit: return head + ["....BBBB....."]
+        case .hunt1: return head + ["OW.........WO"] // 자세 낮추고 다리를 넓게
+        case .hunt2: return head + [".OW.......WO."] // 살짝 당겨 꼬리 씰룩
         }
     }
 }
