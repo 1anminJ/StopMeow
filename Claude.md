@@ -21,14 +21,15 @@ git commit -m "<타입>: <요약>"
 git push origin <브랜치명>
 ```
 
-- 새 브랜치에서 작업 완료 후 병합이 필요한 경우, merge/PR 관련 명령어도 함께 제시:
+- 새 브랜치에서 작업 완료 후 병합이 필요한 경우, merge 관련 명령어를 함께 제시:
 
 ```bash
 git checkout main
 git merge <브랜치명>
 ```
 
-또는 PR 방식 사용 시 PR 생성 안내로 대체
+- PR 방식을 쓸 경우, PR 생성(`gh pr create` 등)은 예외적으로 Claude가 직접 실행한다.
+  (add/commit/push/merge/rebase처럼 기록을 만드는 다른 git 명령어는 여전히 직접 실행하지 않고 안내만 한다.)
 
 ## 커밋 메시지 컨벤션
 
