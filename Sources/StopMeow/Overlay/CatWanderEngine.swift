@@ -132,6 +132,13 @@ final class CatWanderEngine {
         updateGaze(window: window)
         updatePetting(window: window)
 
+        // 숏폼 경고는 (실제 드래그 중이 아니면) 호버 쓰다듬기보다 우선한다 — 안 그러면 커서를
+        // 가만히 둔 채 영상만 보고 있을 때 고양이가 "쓰다듬기"에 멈춰서 경고가 영원히 안 뜬다.
+        if !isExternallyDragging && shortformWarnLevel > 0 {
+            isPaused = false
+            state.isPetting = false
+        }
+
         let wasOverridden = isHunting || typingActivity != .idle || shortformWarnLevel > 0
 
         if isPaused {
