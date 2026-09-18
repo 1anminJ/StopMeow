@@ -3,7 +3,7 @@ import AppKit
 /// 메뉴바 아이콘 + 표준 NSMenu 드롭다운.
 /// 커스텀 팝오버(화살표 튀어나오는 모양) 대신 macOS 기본 메뉴 UI를 그대로 사용 — 위치/여백 문제 자체가 없음.
 final class MenuBarController: NSObject {
-    private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+    private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
     private let catEnabledItem = NSMenuItem()
     private let shortformDetectionItem = NSMenuItem()
@@ -13,12 +13,25 @@ final class MenuBarController: NSObject {
     private let weakItem = NSMenuItem()
     private let normalItem = NSMenuItem()
     private let strongItem = NSMenuItem()
+    private let pomodoroItem = NSMenuItem()
+    private let pomodoroEngine = PomodoroEngine()
 
     override init() {
         super.init()
         statusItem.button?.title = "🐱"
         statusItem.menu = buildMenu()
         refreshCheckmarks()
+
+        pomodoroEngine.onTick = { [weak self] remaining in
+            guard let self else { return }
+            if let remaining {
+                self.statusItem.button?.title = "🐱 \(remaining)"
+                self.pomodoroItem.title = "뽀모도로 중지"
+            } else {
+                self.statusItem.button?.title = "🐱"
+                self.pomodoroItem.title = "뽀모도로 시작 (25분)"
+            }
+        }
     }
 
     private func buildMenu() -> NSMenu {
@@ -69,6 +82,13 @@ final class MenuBarController: NSObject {
 
         menu.addItem(.separator())
 
+        pomodoroItem.title = "뽀모도로 시작 (25분)"
+        pomodoroItem.target = self
+        pomodoroItem.action = #selector(togglePomodoro)
+        menu.addItem(pomodoroItem)
+
+        menu.addItem(.separator())
+
         let quitItem = NSMenuItem(title: "종료", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quitItem.target = NSApp
         menu.addItem(quitItem)
@@ -101,6 +121,7 @@ final class MenuBarController: NSObject {
     @objc private func toggleStretch() { toggle(SettingsKey.stretchReminderEnabled, item: stretchItem) }
     @objc private func toggleWater() { toggle(SettingsKey.waterReminderEnabled, item: waterItem) }
     @objc private func toggleJump() { toggle(SettingsKey.jumpEnabled, item: jumpItem) }
+    @objc private func togglePomodoro() { pomodoroEngine.toggle() }
 
     @objc private func selectIntensity(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String else { return }

@@ -45,6 +45,10 @@ final class CatWanderEngine {
     /// 경고3 진입/해제 시 호출 (OverlayWindowController가 큰 팝업을 띄우고 내리는 데 사용).
     var onShortformWarn3Changed: ((Bool) -> Void)?
 
+    private let reminderEngine = ReminderEngine()
+    /// 스트레칭/물 알림이 울릴 때 호출 (OverlayWindowController가 배너를 띄우는 데 사용).
+    var onReminderFired: ((String) -> Void)?
+
     private let speed: CGFloat = 60 // px/초
     private let idleDuration: ClosedRange<TimeInterval> = 1.5...4.0
     private let screenMargin: CGFloat = 16
@@ -74,6 +78,11 @@ final class CatWanderEngine {
         }
         shortformDetector.start()
 
+        reminderEngine.onFire = { [weak self] message in
+            self?.onReminderFired?(message)
+        }
+        reminderEngine.start()
+
         timer = Timer.scheduledTimer(withTimeInterval: tickInterval, repeats: true) { [weak self] _ in
             self?.tick()
         }
@@ -84,6 +93,7 @@ final class CatWanderEngine {
         timer = nil
         typingMonitor.stop()
         shortformDetector.stop()
+        reminderEngine.stop()
     }
 
     /// 기획서 상태머신 표에 대응하는 현재 상태. 내부 플래그들로부터 매 호출 시 계산.

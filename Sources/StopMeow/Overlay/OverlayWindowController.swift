@@ -9,6 +9,8 @@ final class OverlayWindowController: NSWindowController {
     private var settingsObserver: NSObjectProtocol?
     private var isCatEnabled = true
     private let shortformAlert = ShortformAlertWindowController()
+    private let reminderWindow = ReminderWindowController()
+    private var pomodoroObserver: NSObjectProtocol?
 
     convenience init() {
         // 높이에 jumpHeadroomRows만큼 여유를 둬서 스페이스바 점프가 위로 튈 때 안 잘리게 함.
@@ -58,6 +60,11 @@ final class OverlayWindowController: NSWindowController {
             }
         }
 
+        engine.onReminderFired = { [weak self] message in
+            guard let self, self.isCatEnabled else { return }
+            self.reminderWindow.show(message: message)
+        }
+
         applyCatEnabledSetting(initial: true)
         settingsObserver = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification,
@@ -66,11 +73,25 @@ final class OverlayWindowController: NSWindowController {
         ) { [weak self] _ in
             self?.applyCatEnabledSetting(initial: false)
         }
+
+        // 뽀모도로 완료(메뉴바가 관리) -> 축하 점프 + 배너. 서로 직접 참조하지 않고 알림으로만 연결.
+        pomodoroObserver = NotificationCenter.default.addObserver(
+            forName: PomodoroEngine.didCompleteNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self, self.isCatEnabled else { return }
+            self.animationState.jumpTrigger += 1 // 축하 점프는 스페이스바 토글과 무관하게 항상 재생
+            self.reminderWindow.show(message: "뽀모도로 완료! 수고했어요 🎉")
+        }
     }
 
     deinit {
         if let settingsObserver {
             NotificationCenter.default.removeObserver(settingsObserver)
+        }
+        if let pomodoroObserver {
+            NotificationCenter.default.removeObserver(pomodoroObserver)
         }
     }
 
