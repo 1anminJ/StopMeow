@@ -5,7 +5,7 @@ import SwiftUI
 /// 기획서 "고양이가 확대되며 화면을 가림"의 최소 구현 — 카드/버튼 없이 고양이만 확대해서 보여준다.
 /// 클릭은 그대로 통과시켜서(ignoresMouseEvents) 실제로 조작을 막지는 않는다.
 final class ShortformAlertWindowController: NSWindowController {
-    private static let pixelSize: CGFloat = 56 // 평소 크기(8)의 7배 — 확실히 눈에 띄게
+    private static let pixelSize: CGFloat = 22.75 // 32*22.75=728pt, 기존 큰 팝업 크기 유지
 
     convenience init() {
         let size = NSSize(
@@ -25,7 +25,10 @@ final class ShortformAlertWindowController: NSWindowController {
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         window.ignoresMouseEvents = true
         window.contentView = NSHostingView(
-            rootView: PixelSpriteView(rows: CatFrame.idleStand.rows(eyeLook: .center), pixelSize: Self.pixelSize)
+            rootView: PixelSpriteView(
+                colors: CatFrame.idleStand.displayColors(eyeLook: .center, overrides: PixelOverrideStore.load()),
+                pixelSize: Self.pixelSize
+            )
         )
         window.center()
         self.init(window: window)

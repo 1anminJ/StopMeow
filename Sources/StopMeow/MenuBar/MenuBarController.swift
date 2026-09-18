@@ -15,23 +15,40 @@ final class MenuBarController: NSObject {
     private let strongItem = NSMenuItem()
     private let pomodoroItem = NSMenuItem()
     private let pomodoroEngine = PomodoroEngine()
+    private let designWindow = DesignWindowController()
+    private var settingsObserver: NSObjectProtocol?
 
     override init() {
         super.init()
-        statusItem.button?.title = "🐱"
+        refreshIcon()
         statusItem.menu = buildMenu()
         refreshCheckmarks()
 
         pomodoroEngine.onTick = { [weak self] remaining in
             guard let self else { return }
-            if let remaining {
-                self.statusItem.button?.title = "🐱 \(remaining)"
-                self.pomodoroItem.title = "뽀모도로 중지"
-            } else {
-                self.statusItem.button?.title = "🐱"
-                self.pomodoroItem.title = "뽀모도로 시작 (25분)"
-            }
+            self.statusItem.button?.title = remaining.map { " \($0)" } ?? ""
+            self.pomodoroItem.title = remaining == nil ? "뽀모도로 시작 (25분)" : "뽀모도로 중지"
         }
+
+        // 디자인 에디터에서 커스텀 색을 바꾸면 메뉴바 아이콘도 바로 반영.
+        settingsObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.refreshIcon()
+        }
+    }
+
+    deinit {
+        if let settingsObserver {
+            NotificationCenter.default.removeObserver(settingsObserver)
+        }
+    }
+
+    private func refreshIcon() {
+        statusItem.button?.image = CatMenuBarIcon.render()
+        statusItem.button?.imagePosition = .imageLeft
     }
 
     private func buildMenu() -> NSMenu {
@@ -89,6 +106,12 @@ final class MenuBarController: NSObject {
 
         menu.addItem(.separator())
 
+        let designItem = NSMenuItem(title: "디자인 열기", action: #selector(openDesignWindow), keyEquivalent: "")
+        designItem.target = self
+        menu.addItem(designItem)
+
+        menu.addItem(.separator())
+
         let quitItem = NSMenuItem(title: "종료", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quitItem.target = NSApp
         menu.addItem(quitItem)
@@ -122,6 +145,7 @@ final class MenuBarController: NSObject {
     @objc private func toggleWater() { toggle(SettingsKey.waterReminderEnabled, item: waterItem) }
     @objc private func toggleJump() { toggle(SettingsKey.jumpEnabled, item: jumpItem) }
     @objc private func togglePomodoro() { pomodoroEngine.toggle() }
+    @objc private func openDesignWindow() { designWindow.show() }
 
     @objc private func selectIntensity(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String else { return }

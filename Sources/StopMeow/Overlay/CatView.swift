@@ -26,9 +26,16 @@ struct CatView: View {
         let overheating = displayFrame.isOverheating
 
         ZStack(alignment: .top) {
-            PixelSpriteView(rows: displayFrame.rows(eyeLook: displayEyeLook))
+            PixelSpriteView(
+                colors: displayFrame.displayColors(eyeLook: displayEyeLook, overrides: PixelOverrideStore.load()),
+                pixelSize: CatSprite.pixelSize
+            )
                 // ponytail: "빨개짐"은 픽셀을 새로 그리는 대신 색 틴트로 근사.
                 .colorMultiply(overheating ? Color(red: 1, green: 0.55, blue: 0.5) : .white)
+                // 매 렌더마다 새 이미지가 만들어지는데, 쓰다듬기 펄스처럼 활성 애니메이션이 있는 동안
+                // 무관한 상태 변화로 재렌더되면 SwiftUI가 이미지 교체 자체를 크로스페이드로 처리해
+                // 순간적으로 투명해 보였다 — 이 서브트리는 암묵적 애니메이션에서 아예 제외.
+                .transaction { $0.animation = nil }
             if overheating {
                 SteamPuff().offset(y: -10) // "김"
             }

@@ -4,7 +4,7 @@ import SwiftUI
 /// 스트레칭/물/뽀모도로 완료 알림 공용 창 — 확대된 고양이 + 짧은 문구,
 /// 일정 시간 후 자동으로 사라진다. ShortformAlertWindowController와 같은 톤(카드/버튼 없음)으로 통일.
 final class ReminderWindowController: NSWindowController {
-    fileprivate static let pixelSize: CGFloat = 20
+    fileprivate static let pixelSize: CGFloat = 8.125 // 32*8.125=260pt, 기존 배너 크기 유지
     fileprivate static let width = CGFloat(CatSprite.width) * pixelSize
     fileprivate static let height = CGFloat(CatSprite.heightRows) * pixelSize + 48 // 문구 들어갈 자리
 
@@ -50,7 +50,7 @@ private struct ReminderBannerView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            PixelSpriteView(rows: frame.rows(eyeLook: .center), pixelSize: pixelSize)
+            PixelSpriteView(colors: frame.displayColors(eyeLook: .center, overrides: PixelOverrideStore.load()), pixelSize: pixelSize)
             Text(message)
                 .font(.headline)
                 .multilineTextAlignment(.center)

@@ -139,8 +139,13 @@ final class CatWanderEngine {
 
     private func tick() {
         guard let window else { return }
-        updateGaze(window: window)
         updatePetting(window: window)
+        // 쓰다듬는 동안은 화면에 항상 감은 눈(.closed)을 강제로 보여주므로 시선 추적이 무의미하다.
+        // 근데 계속 돌리면 state.eyeLook이 커서를 따라 계속 바뀌면서(@Published) 매 틱 불필요하게
+        // 화면을 다시 그리게 만들어서, 쓰다듬는 동안 렌더링이 너무 잦아져 깜빡이는 원인이 됐다.
+        if !state.isPetting {
+            updateGaze(window: window)
+        }
 
         // 숏폼 경고는 (실제 드래그 중이 아니면) 호버 쓰다듬기보다 우선한다 — 안 그러면 커서를
         // 가만히 둔 채 영상만 보고 있을 때 고양이가 "쓰다듬기"에 멈춰서 경고가 영원히 안 뜬다.
