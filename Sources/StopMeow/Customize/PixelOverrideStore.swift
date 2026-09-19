@@ -7,9 +7,18 @@ enum PixelOverrideStore {
 
     static func load() -> PixelOverrides {
         guard let data = UserDefaults.standard.data(forKey: key),
-              let dict = try? JSONDecoder().decode(PixelOverrides.self, from: data)
+              var dict = try? JSONDecoder().decode(PixelOverrides.self, from: data)
         else { return [:] }
+        migrateMissingOverheatLegCell(&dict)
         return dict
+    }
+
+    /// 과열(overheat2) 포즈의 다리 왼쪽 한 칸(7_3)은 원래 에디터가 노출한 적이 없어 계속
+    /// 빠져 있던 좌표다. "몸통 기본색"으로 매번 맞춰줘야 하는 건 사용자가 잊기 쉬워 신뢰할 수
+    /// 없으므로, 옆 칸(7_4, 같은 다리 뭉치)의 색을 그대로 복사해 일회성으로 메꾼다.
+    private static func migrateMissingOverheatLegCell(_ overrides: inout PixelOverrides) {
+        guard overrides["7_3"] == nil, let neighbor = overrides["7_4"] else { return }
+        overrides["7_3"] = neighbor
     }
 
     static func save(_ overrides: PixelOverrides) {
