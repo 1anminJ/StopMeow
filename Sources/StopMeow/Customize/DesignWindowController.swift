@@ -6,12 +6,16 @@ import SwiftUI
 final class DesignWindowController: NSWindowController {
     convenience init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 720, height: 440),
-            styleMask: [.titled, .closable, .miniaturizable],
+            contentRect: NSRect(x: 0, y: 0, width: 820, height: 620),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = "멈춰묘 디자인"
+        window.minSize = NSSize(width: 800, height: 480)
+        // 타이틀바를 크림 배경과 이어지게 해서 커스텀 테마(CuteTheme)가 창 전체를 감싸는 느낌을 준다.
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = NSColor(red: 1.0, green: 0.97, blue: 0.92, alpha: 1)
         window.center()
         window.contentView = NSHostingView(rootView: PixelZoneEditorView())
         self.init(window: window)

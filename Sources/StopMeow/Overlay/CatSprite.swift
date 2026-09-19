@@ -30,9 +30,11 @@ enum BodyZone: String, CaseIterable, Identifiable {
     }
 }
 
-/// 픽셀 단위 커스텀 색. 키는 "row_col"(원본 13x8 좌표), 값은 "#RRGGBB".
-/// 존(zone)은 에디터에서 "이 픽셀이 어디 소속인지" 구분하는 용도일 뿐 — 실제 칠은 픽셀 단위로 저장되므로
-/// 줄무늬·점박이 같은 존 내부 무늬도 표현 가능하다.
+/// 커스텀 색 저장소. 두 종류의 키가 섞여 들어간다:
+/// - "row_col" (몸통 'B' 픽셀 전용): 픽셀 단위 오버라이드 — 줄무늬·점박이 등 무늬 표현용.
+/// - "part_<문자>" (눈 K / 코·귀안쪽 P / 배·발 W / 외곽선 O): 그 문자가 쓰이는 모든 픽셀에
+///   한 번에 적용되는 "부위 전체 색" — 눈 위치가 시선 방향에 따라 프레임마다 미묘하게 옮겨 다녀서
+///   픽셀 좌표로는 안정적으로 추적할 수 없기 때문에, 문자(의미) 단위로 저장한다.
 typealias PixelOverrides = [String: String]
 
 func pixelKey(row: Int, col: Int) -> String { "\(row)_\(col)" }
@@ -62,8 +64,8 @@ enum CatSprite {
         "OBWWWWWWWBOO.",
     ]
 
-    /// template과 같은 좌표계의 존 지도. 'B'(몸통색) 픽셀에만 의미가 있고 나머지는 무시된다
-    /// (눈/코/발바닥 등 고정 팔레트는 기획서대로 커스텀 대상이 아님).
+    /// template과 같은 좌표계의 존 지도. 'B'(몸통색) 픽셀에만 의미가 있고 나머지는 무시된다 —
+    /// 몸통은 "머리/등/꼬리/다리" 존 단위 일괄 채우기용이고, 눈/코/발바닥/외곽선은 partKey로 따로 커스텀한다.
     private static let zoneTemplate: [String] = [
         ".............",
         ".............",
@@ -97,6 +99,10 @@ enum CatSprite {
         "K": Color(red: 0.13, green: 0.13, blue: 0.13), // 눈
         "P": Color(red: 0.95, green: 0.66, blue: 0.75), // 코/귀 안쪽
     ]
+
+    /// 'B'가 아닌 부위(눈/코/발바닥/외곽선)의 커스텀 저장 키. 문자 단위로 저장해서
+    /// 해당 문자가 등장하는 모든 프레임·모든 픽셀에 한 번에 적용한다.
+    static func partKey(_ char: Character) -> String { "part_\(char)" }
 
     /// (row, col)의 몸통색(B) 픽셀이 속한 존. 마지막 줄(다리/자세)은 프레임마다 모양이 달라도
     /// 항상 "다리" 존으로 취급한다.
@@ -151,14 +157,19 @@ enum CatFrame: Equatable {
         }
     }
 
-    /// 픽셀 단위 커스텀 색을 반영해 표시 해상도(32 기준)로 확대한 최종 컬러 그리드.
-    /// 커스텀은 몸통색(B) 픽셀에만 적용된다 — 눈/코/발바닥 등 고정 팔레트는 항상 그대로.
+    /// 커스텀 색을 반영해 표시 해상도(32 기준)로 확대한 최종 컬러 그리드.
+    /// 몸통(B)은 픽셀 단위로, 눈/코/발바닥/외곽선은 부위 단위(partKey)로 커스텀된다.
     func displayColors(eyeLook: EyeLook, overrides: PixelOverrides = [:]) -> [[Color]] {
         let sourceRows = rows(eyeLook: eyeLook)
         let sourceColors: [[Color]] = sourceRows.enumerated().map { rowIndex, row in
             row.enumerated().map { colIndex, char -> Color in
                 if char == "B",
                    let hex = overrides[pixelKey(row: rowIndex, col: colIndex)],
+                   let custom = Color(hex: hex) {
+                    return custom
+                }
+                if char != ".",
+                   let hex = overrides[CatSprite.partKey(char)],
                    let custom = Color(hex: hex) {
                     return custom
                 }
