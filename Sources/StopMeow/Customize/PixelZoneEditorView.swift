@@ -8,12 +8,13 @@ struct PixelZoneEditorView: View {
     @State private var paintColor: Color = Color(red: 0.88, green: 0.55, blue: 0.29)
     @State private var selectedZone: BodyZone?
 
-    // 두 곳 모두 같은 종류의 버그: 기준(idleStand, 정면 시선) 프레임엔 없지만 다른 상태에서만
+    // 세 경우 모두 같은 종류의 버그: 기준(idleStand, 정면 시선) 프레임엔 없지만 다른 상태에서만
     // 나타나는 몸통색(B) 칸이 있어서, 그 좌표를 에디터가 노출한 적이 없어 칠할 수 없었다.
     //
     // 1) 마지막 줄(다리): 서있는 자세는 O/W로만 그려 B 칸이 없다. 앉은 자세/과열 자세는 다리를
     //    몸통색 뭉치(B)로 그리는데 그 좌표가 노출되지 않아, 쓰다듬을 때(앉은 자세) 다리만
-    //    기본 주황색으로 보였다 — sit의 다리 모양으로 바꿔서 칠할 수 있게 함.
+    //    기본 주황색으로 보였다 — sit·overheat1·overheat2의 다리 모양을 전부 합쳐서 노출한다
+    //    (overheat2는 떨림 표현으로 한 칸 왼쪽으로 밀려 있어, sit만으론 그 한 칸이 빠졌었음).
     // 2) 눈 줄(row 3): 시선 방향(왼쪽/오른쪽/감음)마다 눈동자(K)가 다른 칸에 있어서, 정면
     //    기준으로는 몸통(B)인 칸이 옆을 볼 때 눈(K)이 되기도 하고, 반대로 정면엔 눈이라 칠할 수
     //    없었던 칸이 눈을 감으면 몸통(B)이 되기도 한다 — 옆을 보거나 쓰다듬을 때(눈 감음) 그
@@ -24,7 +25,15 @@ struct PixelZoneEditorView: View {
     private let referenceRows: [String] = {
         var rows = CatFrame.idleStand.rows(eyeLook: .center)
         rows[3] = CatFrame.idleStand.rows(eyeLook: .closed)[3]
-        rows[rows.count - 1] = CatFrame.sit.rows(eyeLook: .center).last!
+
+        var legRow = Array(CatFrame.sit.rows(eyeLook: .center).last!)
+        for frame in [CatFrame.overheat1, .overheat2] {
+            let frameLegRow = Array(frame.rows(eyeLook: .center).last!)
+            for i in legRow.indices where frameLegRow[i] == "B" {
+                legRow[i] = "B"
+            }
+        }
+        rows[rows.count - 1] = String(legRow)
         return rows
     }()
 

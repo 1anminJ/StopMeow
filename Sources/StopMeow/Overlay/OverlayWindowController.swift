@@ -10,6 +10,7 @@ final class OverlayWindowController: NSWindowController {
     private var isCatEnabled = true
     private let shortformAlert = ShortformAlertWindowController()
     private let reminderWindow = ReminderWindowController()
+    private let reminderBigAlert = ReminderBigAlertWindowController()
     private var pomodoroObserver: NSObjectProtocol?
 
     convenience init() {
@@ -60,9 +61,15 @@ final class OverlayWindowController: NSWindowController {
             }
         }
 
+        // 스트레칭/물 마시기: 숏폼 경고3처럼 작은 고양이를 숨기고 큰 고양이+문구를 띄운다.
+        // 클릭하면(또는 일정 시간 후 자동으로) 큰 고양이가 사라지고 작은 고양이가 돌아온다.
         engine.onReminderFired = { [weak self] message in
             guard let self, self.isCatEnabled else { return }
-            self.reminderWindow.show(message: message)
+            self.window?.orderOut(nil)
+            self.reminderBigAlert.show(message: message) { [weak self] in
+                guard let self, self.isCatEnabled else { return }
+                self.window?.orderFront(nil)
+            }
         }
 
         applyCatEnabledSetting(initial: true)
