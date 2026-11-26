@@ -9,10 +9,8 @@ final class PomodoroEngine {
     private var timer: Timer?
     private var remainingSeconds = 0
 
-    // ponytail: 표준 뽀모도로 25분으로 하드코딩.
-    // TODO: 로드맵 2/4단계 큰 창(디자인 커스텀)에서 주기를 설정할 수 있게 될 예정 —
-    // 그때 UserDefaults 값으로 바꾸고 여기서 읽어오도록 교체.
-    private let sessionDuration = 25 * 60
+    /// 큰 창 "생산성" 탭에서 설정한 한 세션 길이(분). 진행 중인 세션엔 영향 없고 다음 시작부터 적용.
+    static var sessionMinutes: Int { UserDefaults.standard.integer(forKey: SettingsKey.pomodoroMinutes) }
 
     /// 남은 시간 문자열("24:59") 또는 nil(중지됨)을 전달.
     var onTick: ((String?) -> Void)?
@@ -24,7 +22,7 @@ final class PomodoroEngine {
     func start() {
         guard !isRunning else { return }
         isRunning = true
-        remainingSeconds = sessionDuration
+        remainingSeconds = Self.sessionMinutes * 60
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             self?.tick()
         }

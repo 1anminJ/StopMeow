@@ -9,6 +9,11 @@ enum SettingsKey {
     static let stretchReminderEnabled = "settings.stretchReminderEnabled"
     static let waterReminderEnabled = "settings.waterReminderEnabled"
     static let catName = "settings.catName"
+    static let stretchIntervalMinutes = "settings.stretchIntervalMinutes"
+    static let waterIntervalMinutes = "settings.waterIntervalMinutes"
+    static let stretchRepeats = "settings.stretchRepeats"
+    static let waterRepeats = "settings.waterRepeats"
+    static let pomodoroMinutes = "settings.pomodoroMinutes"
 
     /// 앱 시작 시 한 번 등록. 값이 아예 없을 때(최초 실행)의 기본값을 정한다.
     static func registerDefaults() {
@@ -20,6 +25,11 @@ enum SettingsKey {
             stretchReminderEnabled: true,
             waterReminderEnabled: true,
             catName: "멈춰묘",
+            stretchIntervalMinutes: 45,
+            waterIntervalMinutes: 60,
+            stretchRepeats: true,
+            waterRepeats: true,
+            pomodoroMinutes: 25,
         ])
     }
 }
