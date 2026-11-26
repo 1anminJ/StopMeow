@@ -2,7 +2,7 @@ import AppKit
 
 /// 메뉴바 아이콘 + 표준 NSMenu 드롭다운.
 /// 커스텀 팝오버(화살표 튀어나오는 모양) 대신 macOS 기본 메뉴 UI를 그대로 사용 — 위치/여백 문제 자체가 없음.
-final class MenuBarController: NSObject {
+final class MenuBarController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
     private let catEnabledItem = NSMenuItem()
@@ -14,6 +14,7 @@ final class MenuBarController: NSObject {
     private let normalItem = NSMenuItem()
     private let strongItem = NSMenuItem()
     private let pomodoroItem = NSMenuItem()
+    private let pauseItem = NSMenuItem()
     private let pomodoroEngine = PomodoroEngine()
     private let designWindow = DesignWindowController()
     private var settingsObserver: NSObjectProtocol?
@@ -58,6 +59,8 @@ final class MenuBarController: NSObject {
 
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
+        menu.delegate = self
+        menu.autoenablesItems = false // 쉬기 항목을 감지 Off일 때 직접 비활성화하기 위함(나머지는 항상 활성)
 
         catEnabledItem.title = "고양이 표시"
         catEnabledItem.target = self
@@ -82,6 +85,8 @@ final class MenuBarController: NSObject {
         let intensityHeader = NSMenuItem(title: "방해 강도", action: nil, keyEquivalent: "")
         intensityHeader.submenu = intensityMenu
         menu.addItem(intensityHeader)
+
+        menu.addItem(pauseItem)
 
         menu.addItem(.separator())
 
@@ -136,7 +141,47 @@ final class MenuBarController: NSObject {
         weakItem.state = intensity == DisturbIntensity.weak.rawValue ? .on : .off
         normalItem.state = intensity == DisturbIntensity.normal.rawValue ? .on : .off
         strongItem.state = intensity == DisturbIntensity.strong.rawValue ? .on : .off
+
+        refreshPauseItem()
     }
+
+    /// 쉬기는 시간이 지나면 저절로 풀리므로(설정 변경 알림 없음) 메뉴를 열 때마다 다시 그린다.
+    func menuWillOpen(_ menu: NSMenu) {
+        refreshPauseItem()
+    }
+
+    private func refreshPauseItem() {
+        let submenu = NSMenu()
+        if let label = ShortformPause.untilLabel {
+            pauseItem.title = "숏폼 방해 쉬는 중 (\(label))"
+            submenu.addItem(menuItem("지금 다시 켜기", #selector(resumeShortform)))
+        } else {
+            pauseItem.title = "숏폼 방해 쉬기"
+            for minutes in [30, 60] {
+                let item = menuItem(minutes == 60 ? "1시간" : "\(minutes)분", #selector(pauseShortform(_:)))
+                item.representedObject = minutes
+                submenu.addItem(item)
+            }
+            submenu.addItem(menuItem("오늘 하루", #selector(pauseShortformForToday)))
+        }
+        pauseItem.submenu = submenu
+        // 감지를 아예 꺼둔 상태면 쉴 것도 없음.
+        pauseItem.isEnabled = UserDefaults.standard.bool(forKey: SettingsKey.shortformDetectionEnabled)
+    }
+
+    private func menuItem(_ title: String, _ action: Selector) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.target = self
+        return item
+    }
+
+    @objc private func pauseShortform(_ sender: NSMenuItem) {
+        guard let minutes = sender.representedObject as? Int else { return }
+        ShortformPause.pause(minutes: minutes)
+    }
+
+    @objc private func pauseShortformForToday() { ShortformPause.pauseForToday() }
+    @objc private func resumeShortform() { ShortformPause.resume() }
 
     private func toggle(_ key: String, item: NSMenuItem) {
         let newValue = !UserDefaults.standard.bool(forKey: key)

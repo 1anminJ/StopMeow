@@ -24,6 +24,39 @@ enum SupportedBrowser: String, CaseIterable {
     }
 }
 
+/// 숏폼 방해 "잠깐 쉬기"(PRD 9장: 일시정지 기능 필수). 끝나는 시각만 저장하고, 감지기가 매 tick마다
+/// 지금 시각과 비교하므로 시간이 지나면 별도 타이머 없이 자동으로 다시 켜진다.
+enum ShortformPause {
+    static var until: Date? {
+        let t = UserDefaults.standard.double(forKey: SettingsKey.shortformPausedUntil)
+        return t > Date().timeIntervalSince1970 ? Date(timeIntervalSince1970: t) : nil
+    }
+
+    static func pause(minutes: Int) {
+        set(Date().addingTimeInterval(TimeInterval(minutes * 60)))
+    }
+
+    static func pauseForToday() {
+        let calendar = Calendar.current
+        set(calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date()))!)
+    }
+
+    static func resume() {
+        UserDefaults.standard.removeObject(forKey: SettingsKey.shortformPausedUntil)
+    }
+
+    /// "15:30까지" / 오늘 하루면 "오늘 하루".
+    static var untilLabel: String? {
+        guard let until else { return nil }
+        let isMidnight = Calendar.current.component(.hour, from: until) == 0 && Calendar.current.component(.minute, from: until) == 0
+        return isMidnight ? "오늘 하루" : until.formatted(date: .omitted, time: .shortened) + "까지"
+    }
+
+    private static func set(_ date: Date) {
+        UserDefaults.standard.set(date.timeIntervalSince1970, forKey: SettingsKey.shortformPausedUntil)
+    }
+}
+
 /// 브라우저 활성 탭 URL을 주기적으로 확인해 숏폼 시청 여부/누적 시간/경고 단계를 판단한다.
 final class ShortformDetector {
     /// 0 = 해당 없음, 1~3 = 경고 단계 (기획서 ShortformWarn1~3).
@@ -56,7 +89,7 @@ final class ShortformDetector {
     }
 
     private func tick() {
-        guard UserDefaults.standard.bool(forKey: SettingsKey.shortformDetectionEnabled) else {
+        guard UserDefaults.standard.bool(forKey: SettingsKey.shortformDetectionEnabled), ShortformPause.until == nil else {
             reset()
             return
         }
