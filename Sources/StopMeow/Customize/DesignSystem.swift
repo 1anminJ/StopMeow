@@ -98,6 +98,32 @@ struct ZonePillPicker: View {
     }
 }
 
+/// 큰 창 상단의 탭 전환용 알약 탭바 (디자인/이름/갤러리 등). ZonePillPicker와 같은 톤이지만
+/// "전체" 같은 nil 옵션 없이 순수하게 탭 전환 용도.
+struct PillTabBar<Tab: Hashable>: View {
+    let tabs: [(tab: Tab, label: String)]
+    @Binding var selection: Tab
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(tabs, id: \.tab) { entry in
+                Button {
+                    selection = entry.tab
+                } label: {
+                    Text(entry.label)
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(selection == entry.tab ? CuteTheme.accent : CuteTheme.card))
+                        .foregroundStyle(selection == entry.tab ? Color.white : CuteTheme.textPrimary)
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+}
+
 /// 라벨 + 둥근 색상 칩. 탭하면 시스템 색상 선택기가 뜨는 건 ColorPicker 그대로,
 /// 겉모습만 카드 느낌 칩으로 새로 그린다.
 struct ColorSwatchRow: View {

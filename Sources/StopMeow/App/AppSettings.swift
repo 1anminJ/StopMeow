@@ -8,6 +8,7 @@ enum SettingsKey {
     static let shortformDetectionEnabled = "settings.shortformDetectionEnabled"
     static let stretchReminderEnabled = "settings.stretchReminderEnabled"
     static let waterReminderEnabled = "settings.waterReminderEnabled"
+    static let catName = "settings.catName"
 
     /// 앱 시작 시 한 번 등록. 값이 아예 없을 때(최초 실행)의 기본값을 정한다.
     static func registerDefaults() {
@@ -18,6 +19,7 @@ enum SettingsKey {
             shortformDetectionEnabled: true,
             stretchReminderEnabled: true,
             waterReminderEnabled: true,
+            catName: "멈춰묘",
         ])
     }
 }
