@@ -19,6 +19,14 @@ struct BigWindowView: View {
                 PillTabBar(tabs: [(.name, "이름"), (.design, "디자인"), (.gallery, "갤러리"), (.productivity, "생산성"), (.shortform, "숏폼 방해")], selection: $tab)
                 if tab == .design {
                     let dirty = draftDesign != savedDesign
+                    Button("코드 붙여넣기") { pasteCode() }
+                        .buttonStyle(PixelButtonStyle(background: CuteTheme.card, foreground: CuteTheme.textPrimary))
+                        .frame(width: 120)
+                    Button(copied ? "복사됨!" : "코드 복사") { copyCode() }
+                        .buttonStyle(PixelButtonStyle(background: CuteTheme.card, foreground: CuteTheme.textPrimary))
+                        .frame(width: 104)
+                        .disabled(draftDesign.isEmpty)
+                        .help("이 디자인의 공유 코드를 복사해요. 웹 갤러리 \"내 고양이 올리기\"에 붙여넣으면 돼요")
                     Button(dirty ? "저장" : "저장됨") {
                         PixelOverrideStore.save(draftDesign)
                         savedDesign = draftDesign
@@ -47,5 +55,28 @@ struct BigWindowView: View {
             }
         }
         .background(CuteTheme.background)
+        .alert("코드를 불러오지 못했어요", isPresented: Binding(get: { pasteError != nil }, set: { if !$0 { pasteError = nil } })) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text(pasteError ?? "")
+        }
+    }
+
+    @State private var pasteError: String?
+    @State private var copied = false
+
+    /// 지금 화면의 디자인(저장 전 초안 포함)을 공유 코드로 클립보드에 복사한다.
+    private func copyCode() {
+        guard let code = ShareCode.encode(draftDesign) else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(code, forType: .string)
+        copied = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copied = false }
+    }
+
+    /// 클립보드의 공유 코드를 초안으로 불러온다. 저장은 사용자가 "저장"으로 한다.
+    private func pasteCode() {
+        let text = NSPasteboard.general.string(forType: .string) ?? ""
+        do { draftDesign = try ShareCode.decode(text) } catch { pasteError = error.localizedDescription }
     }
 }
