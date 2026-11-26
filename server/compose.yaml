@@ -1,0 +1,15 @@
+# 로컬 개발용 PostgreSQL. server/ 에서 `docker compose up -d`
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: stopmeow
+      POSTGRES_USER: stopmeow
+      POSTGRES_PASSWORD: stopmeow
+    ports:
+      - "5433:5432"  # 5432는 Homebrew PostgreSQL과 겹쳐서 5433
+    volumes:
+      - stopmeow-db:/var/lib/postgresql/data
+
+volumes:
+  stopmeow-db:

@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// 메뉴바 "멈춰묘 설정…"로 여는 큰 창의 최상위 뷰. 탭으로 이름/디자인/생산성/숏폼을 오간다.
-/// 갤러리 탭은 서버(로드맵 4단계)가 준비되면 여기에 추가될 예정.
+/// 메뉴바 "멈춰묘 설정…"로 여는 큰 창의 최상위 뷰. 탭으로 이름/디자인/갤러리/생산성/숏폼을 오간다.
+/// 갤러리 탭은 server/ 의 갤러리 API와 통신한다(로드맵 4단계).
 enum BigWindowTab: Hashable {
-    case name, design, productivity, shortform
+    case name, design, gallery, productivity, shortform
 }
 
 struct BigWindowView: View {
@@ -16,7 +16,7 @@ struct BigWindowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                PillTabBar(tabs: [(.name, "이름"), (.design, "디자인"), (.productivity, "생산성"), (.shortform, "숏폼 방해")], selection: $tab)
+                PillTabBar(tabs: [(.name, "이름"), (.design, "디자인"), (.gallery, "갤러리"), (.productivity, "생산성"), (.shortform, "숏폼 방해")], selection: $tab)
                 if tab == .design {
                     let dirty = draftDesign != savedDesign
                     Button(dirty ? "저장" : "저장됨") {
@@ -36,6 +36,12 @@ struct BigWindowView: View {
             switch tab {
             case .name: NameSettingsView()
             case .design: PixelZoneEditorView(overrides: $draftDesign)
+            case .gallery:
+                GalleryView { design in
+                    PixelOverrideStore.save(design)
+                    savedDesign = design
+                    draftDesign = design
+                }
             case .productivity: ProductivitySettingsView()
             case .shortform: ShortformSettingsView()
             }

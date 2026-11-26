@@ -20,5 +20,11 @@
     <string>14.0</string>
     <key>LSUIElement</key>
     <true/>
+    <!-- 로컬 개발 갤러리 서버(http://localhost:8080) 접속 허용. 배포 서버는 https라 이 예외와 무관. -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
 </dict>
 </plist>

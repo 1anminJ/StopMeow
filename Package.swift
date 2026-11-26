@@ -7,8 +7,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "StopMeow",
-            path: "Sources/StopMeow",
-            exclude: ["Gallery/README.md"]
+            path: "Sources/StopMeow"
         )
     ]
 )

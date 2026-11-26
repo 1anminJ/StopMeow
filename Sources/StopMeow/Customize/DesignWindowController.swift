@@ -1,8 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// 메뉴바 "멈춰묘 설정…"로 여는 큰 창. 디자인/이름/생산성/숏폼 탭이 들어있고,
-/// 갤러리 탭은 로드맵 4단계 이후 이 창에 추가될 예정.
+/// 메뉴바 "멈춰묘 설정…"로 여는 큰 창. 이름/디자인/갤러리/생산성/숏폼 탭이 들어있다.
 final class DesignWindowController: NSWindowController, NSWindowDelegate {
     convenience init() {
         let window = NSWindow(
