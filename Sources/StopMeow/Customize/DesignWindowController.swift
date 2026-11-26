@@ -3,7 +3,7 @@ import SwiftUI
 
 /// 메뉴바 "멈춰묘 설정…"로 여는 큰 창. 디자인/이름/생산성/숏폼 탭이 들어있고,
 /// 갤러리 탭은 로드맵 4단계 이후 이 창에 추가될 예정.
-final class DesignWindowController: NSWindowController {
+final class DesignWindowController: NSWindowController, NSWindowDelegate {
     convenience init() {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 820, height: 660),
@@ -19,6 +19,12 @@ final class DesignWindowController: NSWindowController {
         window.center()
         window.contentView = NSHostingView(rootView: BigWindowView())
         self.init(window: window)
+        window.delegate = self
+    }
+
+    /// 창을 닫으면 내용 뷰를 새로 만들어, 저장 안 한 디자인 초안을 버리고 원래 고양이로 되돌린다.
+    func windowWillClose(_ notification: Notification) {
+        window?.contentView = NSHostingView(rootView: BigWindowView())
     }
 
     func show() {

@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// 픽셀 존 커스텀 에디터. 기준 포즈(가만히 서있는 정면) 위에서 몸통색(B) 픽셀만 칠한다.
-/// 저장은 즉시 반영되어 실제 배회 중인 고양이에도 바로 나타난다(다음 렌더 프레임에 다시 읽어옴).
-/// 로드맵 2단계.
+/// 여기서 칠한 건 초안(overrides 바인딩)일 뿐이고, 큰 창 우측 상단 "저장"을 눌러야
+/// 실제 고양이에 반영된다(BigWindowView가 초안을 들고 있음). 로드맵 2단계.
 struct PixelZoneEditorView: View {
-    @State private var overrides: PixelOverrides = PixelOverrideStore.load()
+    @Binding var overrides: PixelOverrides
     @State private var paintColor: Color = Color(red: 0.88, green: 0.55, blue: 0.29)
     @State private var selectedZone: BodyZone?
 
@@ -137,7 +137,6 @@ struct PixelZoneEditorView: View {
             get: { overrides[CatSprite.partKey(char)].flatMap { Color(hex: $0) } ?? (CatSprite.colors[char] ?? .black) },
             set: { newColor in
                 overrides[CatSprite.partKey(char)] = newColor.hexString
-                persist()
             }
         )
     }
@@ -158,7 +157,6 @@ struct PixelZoneEditorView: View {
             .onTapGesture {
                 guard paintable else { return }
                 overrides[key] = paintColor.hexString
-                persist()
             }
     }
 
@@ -171,13 +169,11 @@ struct PixelZoneEditorView: View {
             }
             overrides[pixelKey(row: row, col: col)] = paintColor.hexString
         }
-        persist()
     }
 
     /// 몸통 무늬 + 부위별 색상(눈/코/발바닥/외곽선)을 전부 기본값으로 되돌린다.
     private func resetToDefault() {
         overrides = [:]
-        persist()
     }
 
     /// 짝수 행만 선택한 색으로 칠해 두 톤짜리 줄무늬를 만든다. 항상 빈 캔버스에서 시작.
@@ -187,7 +183,6 @@ struct PixelZoneEditorView: View {
         forEachPaintablePixel { row, col, _ in
             if row % 2 == 0 { overrides[pixelKey(row: row, col: col)] = hex }
         }
-        persist()
     }
 
     /// 약 35%의 칸을 무작위로 칠해 점박이 무늬를 만든다. 항상 빈 캔버스에서 시작.
@@ -197,7 +192,6 @@ struct PixelZoneEditorView: View {
         forEachPaintablePixel { row, col, _ in
             if Double.random(in: 0...1) < 0.35 { overrides[pixelKey(row: row, col: col)] = hex }
         }
-        persist()
     }
 
     private func forEachPaintablePixel(_ body: (_ row: Int, _ col: Int, _ isLastRow: Bool) -> Void) {
@@ -207,9 +201,5 @@ struct PixelZoneEditorView: View {
                 body(row, col, row == lastRow)
             }
         }
-    }
-
-    private func persist() {
-        PixelOverrideStore.save(overrides)
     }
 }
