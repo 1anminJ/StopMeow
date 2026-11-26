@@ -27,16 +27,19 @@ final class MenuBarController: NSObject {
         pomodoroEngine.onTick = { [weak self] remaining in
             guard let self else { return }
             self.statusItem.button?.title = remaining.map { " \($0)" } ?? ""
-            self.pomodoroItem.title = remaining == nil ? "뽀모도로 시작 (25분)" : "뽀모도로 중지"
+            self.pomodoroItem.title = remaining == nil ? Self.pomodoroStartTitle : "뽀모도로 중지"
         }
 
-        // 디자인 에디터에서 커스텀 색을 바꾸면 메뉴바 아이콘도 바로 반영.
+        // 큰 창에서 커스텀 색/생산성 설정을 바꾸면 메뉴바 아이콘·체크·뽀모도로 문구도 바로 반영.
         settingsObserver = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.refreshIcon()
+            guard let self else { return }
+            self.refreshIcon()
+            self.refreshCheckmarks()
+            if !self.pomodoroEngine.isRunning { self.pomodoroItem.title = Self.pomodoroStartTitle }
         }
     }
 
@@ -45,6 +48,8 @@ final class MenuBarController: NSObject {
             NotificationCenter.default.removeObserver(settingsObserver)
         }
     }
+
+    private static var pomodoroStartTitle: String { "뽀모도로 시작 (\(PomodoroEngine.sessionMinutes)분)" }
 
     private func refreshIcon() {
         statusItem.button?.image = CatMenuBarIcon.render()
@@ -99,14 +104,14 @@ final class MenuBarController: NSObject {
 
         menu.addItem(.separator())
 
-        pomodoroItem.title = "뽀모도로 시작 (25분)"
+        pomodoroItem.title = Self.pomodoroStartTitle
         pomodoroItem.target = self
         pomodoroItem.action = #selector(togglePomodoro)
         menu.addItem(pomodoroItem)
 
         menu.addItem(.separator())
 
-        let designItem = NSMenuItem(title: "디자인 열기", action: #selector(openDesignWindow), keyEquivalent: "")
+        let designItem = NSMenuItem(title: "멈춰묘 설정…", action: #selector(openDesignWindow), keyEquivalent: ",")
         designItem.target = self
         menu.addItem(designItem)
 

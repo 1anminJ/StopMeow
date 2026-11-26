@@ -40,9 +40,9 @@ final class ShortformDetector {
     private let urlPatterns = ["/shorts/", "/reel", "tiktok.com"] // "/reel"은 인스타 /reel/·/reels/ 둘 다 포함
 
     // ponytail: 기획서 1~2분/3~5분/5분+ 표의 하한값을 기준 임계값으로 사용.
-    private let warn1Threshold: TimeInterval = 60
-    private let warn2Threshold: TimeInterval = 180
-    private let warn3Threshold: TimeInterval = 300
+    static let warn1Threshold: TimeInterval = 60
+    static let warn2Threshold: TimeInterval = 180
+    static let warn3Threshold: TimeInterval = 300
 
     func start() {
         timer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
@@ -86,11 +86,11 @@ final class ShortformDetector {
         let m = intensity.thresholdMultiplier
 
         let newLevel: Int
-        if watchedSeconds >= warn3Threshold * m {
+        if watchedSeconds >= Self.warn3Threshold * m {
             newLevel = 3
-        } else if watchedSeconds >= warn2Threshold * m {
+        } else if watchedSeconds >= Self.warn2Threshold * m {
             newLevel = 2
-        } else if watchedSeconds >= warn1Threshold * m {
+        } else if watchedSeconds >= Self.warn1Threshold * m {
             newLevel = 1
         } else {
             newLevel = 0

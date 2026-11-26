@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// 메뉴바 "디자인 열기"로 여는 큰 창. 디자인/이름 탭이 들어있고,
-/// 갤러리/생산성 설정 탭은 로드맵 4단계 이후 이 창에 추가될 예정.
+/// 메뉴바 "멈춰묘 설정…"로 여는 큰 창. 디자인/이름/생산성/숏폼 탭이 들어있고,
+/// 갤러리 탭은 로드맵 4단계 이후 이 창에 추가될 예정.
 final class DesignWindowController: NSWindowController {
     convenience init() {
         let window = NSWindow(
@@ -11,7 +11,7 @@ final class DesignWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "멈춰묘 디자인"
+        window.title = "멈춰묘 설정"
         window.minSize = NSSize(width: 800, height: 530)
         // 타이틀바를 크림 배경과 이어지게 해서 커스텀 테마(CuteTheme)가 창 전체를 감싸는 느낌을 준다.
         window.titlebarAppearsTransparent = true
