@@ -37,6 +37,13 @@ struct PixelZoneEditorView: View {
         return rows
     }()
 
+    /// 지금 칠한 디자인(저장 전 초안 포함)으로 웹 갤러리 업로드 양식을 연다.
+    private func shareCat() {
+        let name = UserDefaults.standard.string(forKey: SettingsKey.catName) ?? "멈춰묘"
+        guard let code = ShareCode.encode(overrides), let url = ShareCode.uploadURL(code: code, catName: name) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     /// 오른쪽 컨트롤 패널 고정 너비. 미리보기 이미지도 이 너비를 넘지 않게 pixelSize를 역산한다.
     private static let controlPanelWidth: CGFloat = 260
     private static let previewPixelSize: CGFloat = 6
@@ -51,6 +58,13 @@ struct PixelZoneEditorView: View {
                 Text("몸통은 칸을 눌러 픽셀 단위로 칠하고, 눈·코·발바닥·외곽선은 오른쪽에서 색을 골라요")
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(CuteTheme.textPrimary.opacity(0.6))
+                Button("🐾 고양이 공유하기") { shareCat() }
+                    .buttonStyle(PixelButtonStyle())
+                    .frame(width: 220)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 8)
+                    .disabled(overrides.isEmpty)
+                    .help("웹 갤러리 업로드 페이지를 이름·코드가 채워진 채로 열어요")
                 Spacer(minLength: 0)
             }
             // 카드 배경의 padding(10) x2만큼 그리드 자체보다 넓어지므로 이를 포함해서 폭을 잡는다.
